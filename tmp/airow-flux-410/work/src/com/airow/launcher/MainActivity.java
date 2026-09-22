@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.json.*;
 
-/** One native scene and a small set of intentional, accessible destinations. */
+/** AIROW Neural Space launcher: native destinations over a procedural spatial environment. */
 public final class MainActivity extends Activity {
   private static final String BOARD="https://nfl-airow-edge.netlify.app/";
   private static final String TRADING_DEFAULT="http://raspberrypi.local:8765/";
@@ -33,7 +33,7 @@ public final class MainActivity extends Activity {
       WHITE=0xfff5f3ef, MUTED=0xffa4a5ab, ACCENT=0xffff644c;
   private SharedPreferences prefs;
   private FrameLayout content;
-  private ApertureHome home;
+  private NeuralHome home;
   private LinearLayout sportsBody, musicBody;
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final ExecutorService worker=Executors.newSingleThreadExecutor();
@@ -140,20 +140,8 @@ public final class MainActivity extends Activity {
   }
   private void showHome(){
     clearPage(0);
-    ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setVerticalScrollBarEnabled(false);
-    home=new ApertureHome(this,this::go);
-    scroll.addView(home,new ScrollView.LayoutParams(-1,-1));
-    content.addView(scroll,new FrameLayout.LayoutParams(-1,-1));
-    // Upward flings open the index when the scene fits; compact displays retain scrolling.
-    scroll.setOnTouchListener(new View.OnTouchListener(){
-      float x,y;
-      public boolean onTouch(View v,MotionEvent e){
-        if(e.getActionMasked()==MotionEvent.ACTION_DOWN){x=e.getX();y=e.getY();}
-        if(e.getActionMasked()==MotionEvent.ACTION_UP&&y-e.getY()>dp(100)&&Math.abs(e.getX()-x)<dp(70)
-            &&home!=null&&home.getHeight()<=scroll.getHeight()+dp(2)){showApps(false);return true;}
-        return false;
-      }
-    });
+    home=new NeuralHome(this,this::go);
+    content.addView(home,new FrameLayout.LayoutParams(-1,-1));
     home.refreshDate();renderNfl();renderSportsWire();renderMusic();
   }
   private void go(String action){
@@ -476,7 +464,7 @@ public final class MainActivity extends Activity {
     if(!musicAllowed())rowAction(musicBody,"Enable playback controls","Optional notification access","↗",this::explainMusic);
   }
   private void showSettings(){
-    LinearLayout body=scrollBody(screen(6,"Make it yours.","AIROW Aperture Flux · 4.1.0"));
+    LinearLayout body=scrollBody(screen(6,"Make it yours.","AIROW Neural Space · 5.0.0"));
     rowAction(body,"Use AIROW as Home",isDefaultHome()?"Already your default launcher":"Choose the Home role","↗",this::requestHome);
     rowAction(body,"Choose assistant","Open any installed assistant from Ask","↗",()->showApps(true));
     rowAction(body,"Sports leagues","Choose the scores on your radar","↗",this::chooseSports);
