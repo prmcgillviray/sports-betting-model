@@ -20,7 +20,7 @@ public final class HomeLayout {
       case "art":return new float[]{0,artY,w,artHeight};
       case "brand":return new float[]{24,12,w-100,48};
       case "settings":return new float[]{w-72,12,48,48};
-      case "gestureHint":return new float[]{24,54,w-96,14};
+      case "gestureHint":return new float[]{24,60,w-96,12};
       case "date":return new float[]{26,72,w-52,24};
       case "clock":return new float[]{21,103,w-42,106};
       case "connect":return new float[]{26,actionY(0),w-52,actionHeight};
