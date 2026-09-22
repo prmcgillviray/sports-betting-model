@@ -26,6 +26,7 @@ jobs:
       - name: Build and test
         working-directory: tmp/airow-flux-410/work
         run: |
+          keytool -genkeypair -keystore airow-development.p12 -storetype PKCS12 -storepass android -keypass android -alias airow-dev -keyalg RSA -keysize 2048 -validity 2 -dname "CN=Temporary CI Build"
           python3 build.py
           python3 test.py
       - name: Package build
