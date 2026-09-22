@@ -1,0 +1,35 @@
+name: Temporary AIROW V6 Build
+on:
+  push:
+    branches: [tmp-airow-v600-build]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with: {distribution: temurin, java-version: '21'}
+      - name: Validate
+        working-directory: tmp/airow-flux-410/work
+        run: |
+          grep -q 'versionCode="60000"' AndroidManifest.xml
+          grep -q 'class CommandHome' src/com/airow/launcher/CommandHome.java
+          grep -q 'new CommandHome' src/com/airow/launcher/MainActivity.java
+          ! grep -R -q 'postInvalidateDelayed' src/com/airow/launcher
+      - name: Build and test
+        working-directory: tmp/airow-flux-410/work
+        run: |
+          rm -f airow-development.p12
+          keytool -genkeypair -keystore airow-development.p12 -storetype PKCS12 -storepass android -keypass android -alias airow-dev -keyalg RSA -keysize 2048 -validity 2 -dname "CN=Temporary CI Build"
+          python3 build.py
+          python3 test.py
+      - name: Package
+        run: |
+          mkdir artifact
+          cp tmp/airow-flux-410/work/build/aligned.apk artifact/AIROW-Home-6.0.0-aligned-unsigned.apk
+          find tmp/airow-flux-410/work/tool-cache/tools -name apksigner.jar -exec cp {} artifact/apksigner.jar \;
+          sha256sum artifact/* > artifact/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with: {name: airow-v600-build, path: artifact/, if-no-files-found: error}
