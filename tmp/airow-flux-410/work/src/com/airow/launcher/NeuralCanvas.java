@@ -38,7 +38,7 @@ public final class NeuralCanvas extends View {
         new int[]{0x99ffffff,0x664bd9ff,0x226f5cff,0x00000000},
         new float[]{0,.18f,.55f,1},Shader.TileMode.CLAMP);
     spectrum=new SweepGradient(cx,cy,new int[]{
-        0xff6f5cff,0xff4bd9ff,0xffff4fd8,0xffffb84d,0xff6f5cff});
+        0xff6f5cff,0xff4bd9ff,0xffff4fd8,0xffffb84d,0xff6f5cff},null);
 
     shardAGradient=new LinearGradient(w*.18f,h*.16f,w*.90f,h*.58f,
         new int[]{0x00ffffff,0x55cfd4ff,0x225e6cff,0x00736cff},null,Shader.TileMode.CLAMP);
