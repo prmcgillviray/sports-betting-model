@@ -143,7 +143,7 @@ public final class ApertureHome extends FrameLayout {
         ||inside(contextText,x,y)||inside(modelText,x,y)||inside(mediaText,x,y)||inside(mediaControl,x,y)||inside(search,x,y);
   }
 
-  private void cancelLongPress(){longPressArmed=false;removeCallbacks(longPress);}
+  private void disarmBloom(){longPressArmed=false;removeCallbacks(longPress);}
 
   @Override public boolean dispatchTouchEvent(MotionEvent e){
     if(bloom.isOpen()){
@@ -158,11 +158,11 @@ public final class ApertureHome extends FrameLayout {
       longPressArmed=!interactiveAt(downX,downY);
       if(longPressArmed)postDelayed(longPress,420);
     }else if(e.getActionMasked()==MotionEvent.ACTION_MOVE){
-      if(Math.hypot(e.getX()-downX,e.getY()-downY)>dp(14))cancelLongPress();
+      if(Math.hypot(e.getX()-downX,e.getY()-downY)>dp(14))disarmBloom();
     }else if(e.getActionMasked()==MotionEvent.ACTION_CANCEL){
-      cancelLongPress();
+      disarmBloom();
     }else if(e.getActionMasked()==MotionEvent.ACTION_UP){
-      cancelLongPress();
+      disarmBloom();
       float dx=e.getX()-downX,dy=e.getY()-downY;
       if(Math.hypot(dx,dy)<dp(18)&&!interactiveAt(e.getX(),e.getY())){
         long now=System.currentTimeMillis();
@@ -185,7 +185,7 @@ public final class ApertureHome extends FrameLayout {
     if(event.getActionMasked()==MotionEvent.ACTION_MOVE
         &&Math.abs(event.getX()-downX)>dp(60)
         &&Math.abs(event.getX()-downX)>Math.abs(event.getY()-downY)*1.4f){
-      cancelLongPress();swiping=true;return true;
+      disarmBloom();swiping=true;return true;
     }
     return false;
   }
@@ -201,7 +201,7 @@ public final class ApertureHome extends FrameLayout {
       art.setTranslationX(Math.max(-dp(26),Math.min(dp(26),(event.getX()-downX)*.13f)));return true;
     }
     if(event.getActionMasked()==MotionEvent.ACTION_CANCEL){
-      art.setTranslationX(0);swiping=false;cancelLongPress();return true;
+      art.setTranslationX(0);swiping=false;disarmBloom();return true;
     }
     if(event.getActionMasked()==MotionEvent.ACTION_UP&&swiping){
       art.setTranslationX(0);actions.go(event.getX()<downX?"sports":"create");swiping=false;return true;
@@ -210,7 +210,7 @@ public final class ApertureHome extends FrameLayout {
   }
 
   @Override protected void onDetachedFromWindow(){
-    cancelLongPress();animate().cancel();bloom.close();art.setTranslationX(0);super.onDetachedFromWindow();
+    disarmBloom();animate().cancel();bloom.close();art.setTranslationX(0);super.onDetachedFromWindow();
   }
 
   private int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
