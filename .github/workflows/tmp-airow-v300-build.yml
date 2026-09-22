@@ -1,0 +1,54 @@
+name: Temporary AIROW V3 Build
+on:
+  push:
+    branches: [tmp-airow-v300-build]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Reconstruct source
+        shell: bash
+        run: |
+          cat tmp/airow-v300/source.part* > source.b64
+          test "$(wc -c < source.b64)" -eq 52544
+          base64 --decode source.b64 > airow-v300-source.tar.xz
+          echo "ec6a19447361a955c3a49867c88a116998d937f5d0f6399eddc13dccbdfcf55f  airow-v300-source.tar.xz" | sha256sum -c -
+          mkdir work
+          tar -xJf airow-v300-source.tar.xz -C work
+      - name: Validate V3 source
+        working-directory: work
+        shell: bash
+        run: |
+          grep -q 'versionCode="13"' AndroidManifest.xml
+          grep -q 'versionName="3.0.0"' AndroidManifest.xml
+          grep -q 'class V3FieldView' src/com/airow/launcher/V3FieldView.java
+          grep -q 'AIROW FIELD V3' src/com/airow/launcher/V3FieldView.java
+          ! grep -R -q 'postInvalidateDelayed' src/com/airow/launcher
+      - name: Build and test
+        working-directory: work
+        run: |
+          python3 build.py
+          python3 test.py
+      - name: Package build
+        shell: bash
+        run: |
+          mkdir artifact
+          cp work/build/aligned.apk artifact/AIROW-Home-3.0.0-aligned-unsigned.apk
+          cp work/output/AIROW-Home-3.0.0.apk artifact/AIROW-Home-3.0.0-temp-signed.apk
+          find work/tool-cache/tools -name apksigner.jar -exec cp {} artifact/apksigner.jar \;
+          AAPT2=$(find work/tool-cache/tools -type f -name aapt2 | head -n 1)
+          "$AAPT2" dump badging work/build/aligned.apk > artifact/build-info.txt
+          sha256sum artifact/* > artifact/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: airow-v300-build
+          path: artifact/
+          if-no-files-found: error
