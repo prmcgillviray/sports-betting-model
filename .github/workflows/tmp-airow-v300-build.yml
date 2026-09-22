@@ -23,6 +23,40 @@ jobs:
           echo "ec6a19447361a955c3a49867c88a116998d937f5d0f6399eddc13dccbdfcf55f  airow-v300-source.tar.xz" | sha256sum -c -
           mkdir work
           tar -xJf airow-v300-source.tar.xz -C work
+      - name: Apply V3 capture fix
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("work/src/com/airow/launcher/MainActivity.java")
+          s=p.read_text()
+          needle="  private void showHome() {"
+          method='''  private void quickCapture() {
+            final EditText input = new EditText(this);
+            input.setHint("Drop a thought...");
+            input.setSingleLine(false);
+            input.setMinLines(3);
+            new AlertDialog.Builder(this)
+                .setTitle("DROP / AIROW")
+                .setView(input)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Save", (dialog, which) -> {
+                  String note = input.getText().toString().trim();
+                  if (note.isEmpty()) return;
+                  String previous = prefs.getString("capture_inbox", "");
+                  String entry = System.currentTimeMillis() + "|" + note;
+                  prefs.edit().putString("capture_inbox", entry + (previous.isEmpty() ? "" : "\\n" + previous)).apply();
+                  toast("Captured to AIROW");
+                })
+                .show();
+          }
+
+          '''
+          if "private void quickCapture()" not in s:
+              if needle not in s: raise SystemExit("showHome anchor missing")
+              s=s.replace(needle,method+needle,1)
+          p.write_text(s)
+          PY
       - name: Validate V3 source
         working-directory: work
         shell: bash
@@ -31,6 +65,7 @@ jobs:
           grep -q 'versionName="3.0.0"' AndroidManifest.xml
           grep -q 'class V3FieldView' src/com/airow/launcher/V3FieldView.java
           grep -q 'AIROW FIELD V3' src/com/airow/launcher/V3FieldView.java
+          grep -q 'private void quickCapture' src/com/airow/launcher/MainActivity.java
           ! grep -R -q 'postInvalidateDelayed' src/com/airow/launcher
       - name: Build and test
         working-directory: work
@@ -43,6 +78,7 @@ jobs:
           mkdir artifact
           cp work/build/aligned.apk artifact/AIROW-Home-3.0.0-aligned-unsigned.apk
           cp work/output/AIROW-Home-3.0.0.apk artifact/AIROW-Home-3.0.0-temp-signed.apk
+          cp work/src/com/airow/launcher/MainActivity.java artifact/MainActivity.java
           find work/tool-cache/tools -name apksigner.jar -exec cp {} artifact/apksigner.jar \;
           AAPT2=$(find work/tool-cache/tools -type f -name aapt2 | head -n 1)
           "$AAPT2" dump badging work/build/aligned.apk > artifact/build-info.txt
