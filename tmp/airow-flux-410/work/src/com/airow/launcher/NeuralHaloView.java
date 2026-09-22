@@ -67,7 +67,7 @@ public final class NeuralHaloView extends View {
         new float[]{0,.42f,.70f,1},Shader.TileMode.CLAMP);
     p.setShader(glow);c.drawCircle(cx,cy,r*1.65f,p);p.setShader(null);
 
-    SweepGradient sweep=new SweepGradient(cx,cy,new int[]{0xff6f5cff,0xff4bd9ff,0xffff4fd8,0xffffb84d,0xff6f5cff});
+    SweepGradient sweep=new SweepGradient(cx,cy,new int[]{0xff6f5cff,0xff4bd9ff,0xffff4fd8,0xffffb84d,0xff6f5cff},null);
     p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(2));p.setShader(sweep);
     c.drawCircle(cx,cy,r,p);p.setShader(null);
 
