@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.json.*;
 
-/** AIROW Neural Space launcher: native destinations over a procedural spatial environment. */
+/** AIROW V6 Command Environment: live native dashboard over a static cinematic hero layer. */
 public final class MainActivity extends Activity {
   private static final String BOARD="https://nfl-airow-edge.netlify.app/";
   private static final String TRADING_DEFAULT="http://raspberrypi.local:8765/";
@@ -33,7 +33,7 @@ public final class MainActivity extends Activity {
       WHITE=0xfff5f3ef, MUTED=0xffa4a5ab, ACCENT=0xffff644c;
   private SharedPreferences prefs;
   private FrameLayout content;
-  private NeuralHome home;
+  private CommandEnvironmentHome home;
   private LinearLayout sportsBody, musicBody;
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final ExecutorService worker=Executors.newSingleThreadExecutor();
@@ -59,7 +59,7 @@ public final class MainActivity extends Activity {
   private final MediaSessionManager.OnActiveSessionsChangedListener sessionListener=list->selectSpotify(list);
   private final BroadcastReceiver clockReceiver=new BroadcastReceiver(){
     @Override public void onReceive(Context c,Intent i){
-      if(home!=null)home.refreshDate();
+      if(home!=null){home.refreshDate();home.refreshTasks();home.refreshSystem();}
       PowerManager pm=(PowerManager)getSystemService(POWER_SERVICE);
       powerSaving=pm!=null&&pm.isPowerSaveMode();
     }
@@ -140,13 +140,14 @@ public final class MainActivity extends Activity {
   }
   private void showHome(){
     clearPage(0);
-    home=new NeuralHome(this,this::go);
+    home=new CommandEnvironmentHome(this,this::go);
     content.addView(home,new FrameLayout.LayoutParams(-1,-1));
-    home.refreshDate();renderNfl();renderSportsWire();renderMusic();
+    home.refreshDate();home.refreshTasks();home.refreshSystem();renderNfl();renderSportsWire();renderMusic();
   }
   private void go(String action){
     switch(action){
       case "connect":showConnect();break;
+      case "focus":showFocus();break;
       case "create":showCreate();break;
       case "apps":showApps(false);break;
       case "search":showApps(false);if(appSearch!=null){appSearch.requestFocus();appSearch.postDelayed(()->{
@@ -182,6 +183,27 @@ public final class MainActivity extends Activity {
     rowAction(body,"Get directions","Choose a place in Maps","↗",()->open(new Intent(Intent.ACTION_VIEW,Uri.parse("geo:0,0?q="))));
     rowAction(body,"Ask your assistant","Opens your chosen assistant app","↗",this::openAssistant);
   }
+  private void showFocus(){
+    LinearLayout body=scrollBody(screen(7,"One thing.","Reduce the field. Pick the next move."));
+    JSONArray items=notes();
+    if(items.length()==0){
+      body.addView(text("Nothing captured yet.",24,WHITE));
+      body.addView(text("Drop the next thing on your mind, then let AIROW keep it visible.",14,MUTED));
+    }else{
+      JSONObject latest=items.optJSONObject(items.length()-1);
+      body.addView(text("FOCUS NOW",11,ACCENT));
+      body.addView(text(latest==null?"Choose your next move":latest.optString("text","Choose your next move"),30,WHITE));
+      space(body,18);body.addView(text("LATER",11,MUTED));
+      int shown=0;
+      for(int i=items.length()-2;i>=0&&shown<2;i--,shown++){
+        JSONObject note=items.optJSONObject(i);if(note!=null)body.addView(text("•  "+note.optString("text",""),16,MUTED));
+      }
+    }
+    space(body,24);
+    rowAction(body,"Capture next move","Save it privately on this phone","+",this::quickCapture);
+    rowAction(body,"Ask AIROW to plan","Open your configured assistant","↗",this::openAssistant);
+  }
+
   private void showCreate(){
     LinearLayout body=scrollBody(screen(4,"Create.","Start something. Keep the thought."));
     rowAction(body,"Capture a thought","Saved privately on this phone","+",this::quickCapture);
@@ -464,7 +486,7 @@ public final class MainActivity extends Activity {
     if(!musicAllowed())rowAction(musicBody,"Enable playback controls","Optional notification access","↗",this::explainMusic);
   }
   private void showSettings(){
-    LinearLayout body=scrollBody(screen(6,"Make it yours.","AIROW Neural Space · 5.0.0"));
+    LinearLayout body=scrollBody(screen(6,"Make it yours.","AIROW Command Environment · 6.0.0"));
     rowAction(body,"Use AIROW as Home",isDefaultHome()?"Already your default launcher":"Choose the Home role","↗",this::requestHome);
     rowAction(body,"Choose assistant","Open any installed assistant from Ask","↗",()->showApps(true));
     rowAction(body,"Sports leagues","Choose the scores on your radar","↗",this::chooseSports);
@@ -474,8 +496,8 @@ public final class MainActivity extends Activity {
     rowAction(body,"Trading Center","Open your configured dashboard","↗",this::openTrading);
     rowAction(body,"Trading address","Configure the Raspberry Pi dashboard","↗",this::configureTrading);
     rowAction(body,"Android settings","Device and default apps","↗",()->open(new Intent(Settings.ACTION_SETTINGS)));
-    space(body,24);body.addView(text("Aperture is still at rest. Only your touch moves it.",16,WHITE));
-    body.addView(text("No motion sensors. No continuous animation. Scores and model data use cached, throttled refreshes. Captures stay on this phone. Ask opens your assistant; AIROW does not run an AI model.",13,MUTED));
+    space(body,24);body.addView(text("Command Environment stays still until you touch it.",16,WHITE));
+    body.addView(text("No motion sensors. No continuous animation. The hero layer is static; only short touch effects move. Scores and model data use cached, throttled refreshes. Captures stay on this phone. Ask opens your assistant; AIROW does not run an AI model.",13,MUTED));
   }
   private void refreshNfl(boolean force) {
     long now = System.currentTimeMillis();
@@ -521,7 +543,7 @@ public final class MainActivity extends Activity {
     c.setUseCaches(false);
     c.setRequestProperty("Accept", accept);
     c.setRequestProperty("Cache-Control", "no-cache");
-    c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 16) AIROW-Home/4.0.0");
+    c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 16) AIROW-Home/6.0.0");
     try {
       if (c.getResponseCode() != 200) throw new IOException("HTTP " + c.getResponseCode());
       try (InputStream in = c.getInputStream();
