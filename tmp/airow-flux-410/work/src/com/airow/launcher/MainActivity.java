@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.json.*;
 
-/** AIROW Neural Space launcher: native destinations over a procedural spatial environment. */
+/** AIROW Command Environment launcher: dense live dashboard over an atmospheric spatial environment. */
 public final class MainActivity extends Activity {
   private static final String BOARD="https://nfl-airow-edge.netlify.app/";
   private static final String TRADING_DEFAULT="http://raspberrypi.local:8765/";
@@ -33,7 +33,7 @@ public final class MainActivity extends Activity {
       WHITE=0xfff5f3ef, MUTED=0xffa4a5ab, ACCENT=0xffff644c;
   private SharedPreferences prefs;
   private FrameLayout content;
-  private NeuralHome home;
+  private CommandHome home;
   private LinearLayout sportsBody, musicBody;
   private final Handler handler=new Handler(Looper.getMainLooper());
   private final ExecutorService worker=Executors.newSingleThreadExecutor();
@@ -140,7 +140,7 @@ public final class MainActivity extends Activity {
   }
   private void showHome(){
     clearPage(0);
-    home=new NeuralHome(this,this::go);
+    home=new CommandHome(this,this::go);
     content.addView(home,new FrameLayout.LayoutParams(-1,-1));
     home.refreshDate();renderNfl();renderSportsWire();renderMusic();
   }
